@@ -2,4 +2,4 @@ collections:
   - name: ansible.posix
   - name: community.mysql
   - name: community.crypto
-  - name: community.general.ufw
+  - name: community.general
