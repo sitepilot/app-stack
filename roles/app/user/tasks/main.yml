@@ -42,7 +42,7 @@
     - "{{ app_logs_path }}"
     - "{{ app_files_path }}"
 
-- name: "Add authorized keys."
+- name: Add authorized keys.
   ansible.posix.authorized_key:
     user: "{{ app_user }}"
     key: "{{ app_auth_keys | join('\n') }}"
@@ -50,11 +50,12 @@
     exclusive: true
   when: app_auth_keys | length > 0
 
-- name: Update default PATH variable.
-  ansible.builtin.lineinfile:
-    path: /etc/environment
-    regexp: '^PATH='
-    line: PATH="~/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+- name: Update crontab PATH.
+  ansible.builtin.cron:
+    name: PATH
+    env: true
+    job: "{{ app_bin_path }}:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    user: "{{ app_user }}"
 
 - name: Generate logrotate configuration.
   ansible.builtin.template:
