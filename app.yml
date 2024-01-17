@@ -1,0 +1,72 @@
+---
+- hosts: "{{ app_hosts }}"
+  become: true
+  vars_files:
+    - defaults/app.yml
+  pre_tasks:
+    - name: Ensure application name variable is defined.
+      fail:
+        msg: "The 'app_name' variable is not defined; please specify a unique name for each application."
+      when: app_name is not defined
+      tags: always
+  roles:
+    - name: app/user
+      tags: user
+
+    - name: app/php
+      tags: php
+      when: "'php' in app_stack"
+
+    - name: app/nginx
+      tags: nginx
+      when: "'nginx' in app_stack"
+
+    - name: app/litespeed
+      tags: litespeed
+      when: "'litespeed' in app_stack"
+
+    - name: app/mysql
+      tags: mysql
+      when: "'mysql' in app_stack"
+
+    - name: redis
+      tags: redis
+      when: "'redis' in app_stack"
+
+    - name: composer
+      tags: composer
+      when: "'composer' in app_stack"
+
+    - name: wpcli
+      tags: wpcli
+      when: "'wpcli' in app_stack"
+
+    - name: app/wordpress
+      tags: wordpress
+      become: true
+      become_user: "{{ app_user }}"
+      when: "'wordpress' == app_type"
+
+    - name: app/laravel
+      tags: laravel
+      become: true
+      become_user: "{{ app_user }}"
+      when: "'laravel' == app_type"
+
+    - name: app/backup
+      tags: never, backup
+      become: true
+      become_user: "{{ app_user }}"
+
+    - name: app/restore
+      tags: never, restore
+      become: true
+      become_user: "{{ app_user }}"
+
+    - name: app/migrate
+      tags: never, migrate
+      become: true
+      become_user: "{{ app_user }}"
+
+    - name: app/destroy
+      tags: never, destroy

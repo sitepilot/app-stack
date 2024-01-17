@@ -1,0 +1,45 @@
+---
+- name: Add litespeed repository key.
+  ansible.builtin.apt_key:
+    id: "0x011AA62DEDA1F085"
+    keyserver: keyserver.ubuntu.com
+    keyring: /etc/apt/trusted.gpg.d/litespeed.gpg
+
+- name: Add litespeed repository.
+  ansible.builtin.apt_repository:
+    repo: "deb https://rpms.litespeedtech.com/debian/ {{ ansible_distribution_release }} main"
+    filename: litespeed
+    update_cache: true
+
+- name: Ensure litespeed is installed.
+  ansible.builtin.apt:
+    name: openlitespeed
+    state: present
+    cache_valid_time: 3600
+  notify: restart litespeed
+
+- name: Update folder permissions.
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: www-data
+    group: www-data
+    mode: "0755"
+  loop:
+    - /tmp/lshttpd
+    - /usr/local/lsws/logs
+
+- name: Reload litespeed on .htaccess change.
+  ansible.builtin.cron:
+    name: openlitespeed_htaccess_scan
+    user: root
+    job: "if ! find /apps/*/files/ -maxdepth 2 -type f -newer /usr/local/lsws/cgid -name '.htaccess' -exec false {} +; then service lshttpd reload; fi"
+    cron_file: openlitespeed_htaccess_scan
+
+- name: Generate litespeed configuration.
+  ansible.builtin.template:
+    src: httpd_config.conf.j2
+    dest: /usr/local/lsws/conf/httpd_config.conf
+    mode: "0644"
+    owner: lsadm
+    group: www-data
+  notify: restart litespeed

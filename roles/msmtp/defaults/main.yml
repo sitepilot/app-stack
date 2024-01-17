@@ -1,0 +1,7 @@
+---
+msmtp_host: mail.smtp2go.com
+msmtp_port: 2525
+msmtp_tls: true
+msmtp_user: ""
+msmtp_password: ""
+msmtp_from: "server+{{ ansible_hostname }}@sitepilot.io"

@@ -1,0 +1,20 @@
+---
+# APP
+app_stack: [ ]
+app_type: default
+app_user: "{{ app_name }}"
+app_group: "{{ app_name }}"
+app_groups: [ ]
+app_password: "!"
+app_auth_keys: [ ]
+app_domains: [ ]
+app_shell: /bin/bash
+app_upload_max_size: 100M
+
+# PATHS
+app_public_dir: "{{ '/public' if 'laravel' == app_type else '/' }}"
+app_home: "/apps/{{ app_name }}"
+app_bin_path: "{{ app_home }}/bin"
+app_logs_path: "{{ app_home }}/logs"
+app_files_path: "{{ app_home }}/files"
+app_public_path: "{{ app_files_path }}{{ app_public_dir }}"

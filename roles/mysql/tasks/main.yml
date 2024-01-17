@@ -1,0 +1,29 @@
+---
+- name: Ensure mysql is installed.
+  ansible.builtin.apt:
+    name:
+      - mysql-server
+      - python3-pymysql
+    state: present
+    cache_valid_time: 3600
+  notify: restart mysql
+
+- name: Get list of hosts for the anonymous user.
+  ansible.builtin.command: mysql -NBe "SELECT Host FROM mysql.user WHERE User = ''"
+  register: mysql_anonymous_hosts
+  changed_when: ''
+  check_mode: false
+
+- name: Remove anonymous mysql users.
+  community.mysql.mysql_user:
+    name: ""
+    host: "{{ item }}"
+    state: absent
+    login_unix_socket: "{{ mysql_unix_socket }}"
+  with_items: "{{ mysql_anonymous_hosts.stdout_lines | default([]) }}"
+
+- name: Remove mysql test database.
+  community.mysql.mysql_db:
+    name: 'test'
+    state: absent
+    login_unix_socket: "{{ mysql_unix_socket }}"

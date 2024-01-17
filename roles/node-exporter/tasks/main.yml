@@ -1,0 +1,39 @@
+---
+- name: Validate variables.
+  ansible.builtin.assert:
+    that:
+      - node_exporter_version | string | length > 0
+
+- name: Set release name variable.
+  ansible.builtin.set_fact:
+    node_exporter_release_name: "{{ node_exporter_version }}.linux-{{ node_exporter_architecture[ansible_architecture] }}"
+
+- name: Download and extract node-exporter binary.
+  ansible.builtin.unarchive:
+    src: "https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_release_name }}.tar.gz"
+    dest: /tmp
+    remote_src: true
+
+- name: Copy binary to bin folder.
+  ansible.builtin.copy:
+    src: "/tmp/node_exporter-{{ node_exporter_release_name }}/node_exporter"
+    dest: "{{ node_exporter_path }}"
+    remote_src: true
+    mode: "0755"
+  notify: restart node-exporter
+
+- name: Generate service configuration.
+  ansible.builtin.template:
+    src: service.j2
+    dest: /etc/systemd/system/node-exporter.service
+    mode: "0644"
+  notify: restart node-exporter
+
+- name: Open Firewall port.
+  community.general.ufw:
+    rule: allow
+    port: 9100
+    proto: tcp
+    src: "{{ item }}"
+    comment: node-exporter
+  loop: "{{ node_exporter_allow_ips }}"

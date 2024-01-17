@@ -1,0 +1,2 @@
+---
+app_php_path: "{{ app_bin_path }}/php"

@@ -1,0 +1,8 @@
+---
+app_nginx_fastcgi_cache: false
+app_nginx_security_headers: true
+app_nginx_static_files_cache: true
+app_nginx_file_protection: true
+app_nginx_uploads_protection: true
+app_nginx_wp_subdirectory: false
+app_nginx_xmlrpc_protection: "{{ 'wordpress' == app_type }}"

@@ -1,0 +1,4 @@
+---
+app_mysql_user: "{{ app_user }}"
+app_mysql_password: ""
+app_mysql_database: "{{ app_name }}"

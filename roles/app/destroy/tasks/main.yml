@@ -1,0 +1,68 @@
+---
+- name: Populate service facts.
+  ansible.builtin.service_facts:
+
+- name: Remove nginx configuration.
+  ansible.builtin.file:
+    dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
+    state: absent
+  notify: reload nginx
+  when: "'nginx.service' in ansible_facts.services"
+
+- name: Remove litespeed configuration.
+  ansible.builtin.file:
+    dest: "/usr/local/lsws/conf/vhosts/{{ app_name }}.conf"
+    state: absent
+  notify: reload litespeed
+  when: "'openlitespeed.service' in ansible_facts.services"
+
+- name: Remove php-fpm configuration.
+  ansible.builtin.file:
+    path: "/etc/php/{{ item }}/fpm/pool.d/{{ app_name }}.conf"
+    state: absent
+  register: php_fpm_cleanup_result
+  loop: "{{ php_versions }}"
+
+- name: Reload php-fpm service.
+  ansible.builtin.service:
+    name: "php{{ item }}-fpm"
+    state: reloaded
+  loop: "{{ php_fpm_cleanup_result.results | selectattr('changed', 'equalto', true) | map(attribute='item') | list }}"
+
+- name: Remove logrotate configuration.
+  ansible.builtin.file:
+    path: "/etc/logrotate.d/{{ app_name }}"
+    state: absent
+
+- name: Remove mysql database.
+  community.mysql.mysql_db:
+    name: "{{ app_mysql_database }}"
+    state: absent
+    login_unix_socket: "{{ mysql_unix_socket }}"
+  when: "'mysql.service' in ansible_facts.services"
+
+- name: Remove mysql database user.
+  community.mysql.mysql_user:
+    name: "{{ app_mysql_user }}"
+    state: absent
+    host: "%"
+    login_unix_socket: "{{ mysql_unix_socket }}"
+  when: "'mysql.service' in ansible_facts.services"
+
+- name: Flush handlers.
+  ansible.builtin.meta: flush_handlers
+
+- name: Remove application user.
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    state: absent
+
+- name: Remove application group.
+  ansible.builtin.group:
+    name: "{{ app_group }}"
+    state: absent
+
+- name: Remove application files.
+  ansible.builtin.file:
+    path: "{{ app_home }}"
+    state: absent

@@ -1,0 +1,62 @@
+---
+- name: Install common packages.
+  ansible.builtin.apt:
+    name:
+      - acl
+      - curl
+      - wget
+      - nano
+      - zip
+      - unzip
+      - restic
+      - logrotate
+      - bubblewrap
+      - unattended-upgrades
+    state: present
+    cache_valid_time: 3600
+
+- name: Generate welcome message.
+  ansible.builtin.template:
+    src: welcome.j2
+    dest: /etc/update-motd.d/00-welcome
+    mode: "0755"
+
+- name: Cleanup motd files.
+  ansible.builtin.file:
+    path: "/etc/update-motd.d/{{ item }}"
+    state: absent
+  loop:
+    - 10-help-text
+    - 50-motd-news
+    - 50-landscape-sysinfo
+    - 90-updates-available
+
+- name: Generate unattended upgrades configuration.
+  ansible.builtin.template:
+    src: unattended_upgrades.j2
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    owner: root
+    group: root
+    mode: "0644"
+  notify: restart unattended-upgrades
+
+- name: Create jailshell script.
+  ansible.builtin.template:
+    src: jailshell.sh.j2
+    dest: /usr/bin/jailshell
+    mode: "0755"
+
+- name: Enable firewall.
+  community.general.ufw:
+    state: enabled
+
+- name: Open firewall ports.
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment }}"
+  loop:
+    - comment: 'ssh'
+      proto: tcp
+      port: 22

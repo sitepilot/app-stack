@@ -1,0 +1,85 @@
+---
+- name: Add nginx repository key.
+  ansible.builtin.apt_key:
+    id: "0x4F4EA0AAE5267A6C"
+    keyserver: keyserver.ubuntu.com
+    keyring: /etc/apt/trusted.gpg.d/nginx.gpg
+
+- name: Add nginx repository.
+  ansible.builtin.apt_repository:
+    repo: "deb http://ppa.launchpad.net/ondrej/nginx/ubuntu {{ ansible_distribution_release }} main"
+    filename: nginx
+    update_cache: true
+
+- name: Ensure nginx is installed.
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    cache_valid_time: 3600
+  notify: restart nginx
+
+- name: Check if server certificate exists.
+  ansible.builtin.stat:
+    path: /etc/nginx/server.crt
+  register: nginx_cert
+
+- name: Create private key.
+  community.crypto.openssl_privatekey:
+    path: /etc/nginx/server.key
+  notify: restart nginx
+  when: not nginx_cert.stat.exists
+
+- name: Create self-signed certificate.
+  community.crypto.x509_certificate:
+    path: /etc/nginx/server.crt
+    privatekey_path: /etc/nginx/server.key
+    provider: selfsigned
+  notify: restart nginx
+  when: not nginx_cert.stat.exists
+
+- name: Remove default vhost.
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/nginx/sites-enabled/default
+    - /etc/nginx/sites-available/default
+
+- name: Generate nginx configuration.
+  ansible.builtin.template:
+    src: "{{ item.template }}"
+    dest: "{{ item.destination }}"
+    mode: "0644"
+  loop:
+    - template: nginx.conf.j2
+      destination: /etc/nginx/nginx.conf
+    - template: default.conf.j2
+      destination: /etc/nginx/sites-available/default.conf
+  notify: restart nginx
+
+- name: Enable default vhost.
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/default.conf
+    dest: /etc/nginx/sites-enabled/default.conf
+    state: link
+
+- name: Copy global configuration.
+  ansible.builtin.copy:
+    src: templates/global
+    dest: /etc/nginx
+    mode: "0755"
+  notify: restart nginx
+
+- name: Open firewall ports.
+  community.general.ufw:
+    rule: allow
+    port: "{{ item.port }}"
+    proto: "{{ item.proto }}"
+    comment: "{{ item.comment }}"
+  loop:
+    - comment: http
+      proto: tcp
+      port: 80
+    - comment: https
+      proto: tcp
+      port: 443

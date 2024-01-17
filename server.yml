@@ -1,0 +1,12 @@
+---
+- hosts: "{{ hosts | default('all') }}"
+  become: true
+  roles:
+    - role: server
+      tags: server
+
+    - role: msmtp
+      tags: msmtp
+
+    - role: node-exporter
+      tags: node-exporter

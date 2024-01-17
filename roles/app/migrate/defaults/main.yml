@@ -1,0 +1,8 @@
+---
+app_migrate_wp: false
+app_migrate_private_key: ''
+app_migrate_remote_path: ''
+app_migrate_remote_host: ''
+app_migrate_remote_port: 22
+app_migrate_remote_user: ''
+app_migrate_replace_url: 'https://{{ app_domains | first }}'

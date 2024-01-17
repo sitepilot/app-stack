@@ -1,0 +1,20 @@
+---
+app_hosts: all
+app_name: app1
+app_type: wordpress
+app_stack:
+  - nginx
+  - litespeed
+  - php
+  - mysql
+  - redis
+  - wpcli
+  - composer
+app_domains:
+  - app1.sitepilot.io
+app_password: "{{ 'secret' | password_hash('sha512', 'mysecretsalt') }}"
+app_mysql_password: "secret"
+app_php_version: "8.1"
+app_backup_password: secret
+app_wordpress_admin: captain
+app_wordpress_password: secret

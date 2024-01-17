@@ -1,0 +1,13 @@
+---
+- name: Check if Laravel is already installed.
+  ansible.builtin.find:
+    paths: "{{ app_files_path }}"
+  register: files
+
+- name: Create new Laravel project.
+  ansible.builtin.command: "{{ app_php_path }} {{ composer_path }} create-project laravel/laravel ."
+  args:
+    chdir: "{{ app_files_path }}"
+  register: result
+  changed_when: "'Installing laravel/laravel' in result.stderr"
+  when: files.matched == 0

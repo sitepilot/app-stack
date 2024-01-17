@@ -1,0 +1,7 @@
+---
+app_php_version: ""
+app_php_fpm_listen: "/run/php/php{{ app_php_version }}-{{ app_name }}.sock"
+app_php_fpm_max_children: 5
+app_php_memory_limit: 256M
+app_php_max_input_vars: 10000
+app_php_max_execution_time: 300

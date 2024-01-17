@@ -1,0 +1,41 @@
+# {{ ansible_managed }}
+virtualHost {{ app_name }} {
+    listeners                 http
+    user                      {{ app_user }}
+    group                     {{ app_group }}
+    vhRoot                    {{ app_home }}
+    docRoot                   {{ app_public_path }}
+    vhDomain                  {{ app_name }}.local
+    vhAliases                 {{ app_domains | join(',') }}
+
+    errorlog {{ app_logs_path }}/litespeed.log {
+      useServer               0
+      logLevel                WARNING
+    }
+
+    index  {
+      useServer               0
+      indexFiles              index.html index.php
+    }
+
+{% if 'php' in app_stack %}
+    scripthandler  {
+      add                     fcgi:php-fpm php
+    }
+
+    extprocessor php-fpm {
+      type                    fcgi
+      address                 UDS:/{{ app_php_fpm_listen }}
+      maxConns                1
+      initTimeout             60
+      retryTimeout            0
+      respBuffer              0
+      autoStart               0
+    }
+{% endif %}
+
+    rewrite  {
+      enable                  1
+      autoLoadHtaccess        1
+    }
+}

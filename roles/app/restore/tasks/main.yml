@@ -1,0 +1,37 @@
+---
+- name: Validate variables.
+  ansible.builtin.assert:
+    that:
+      - app_restore_id is defined
+      - app_backup_repo | length > 0
+      - app_backup_password | length > 0
+
+- name: Restore backup files.
+  ansible.builtin.command: "restic -r {{ app_backup_repo }} restore {{ app_restore_id }} --target ."
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ app_backup_s3_key }}"
+    AWS_SECRET_ACCESS_KEY: "{{ app_backup_s3_secret }}"
+    RESTIC_PASSWORD: "{{ app_backup_password }}"
+  args:
+    chdir: "{{ app_home }}"
+  register: result
+  changed_when: "'restoring' in result.stdout"
+
+- name: Restore mysql database.
+  community.mysql.mysql_db:
+    state: import
+    force: true
+    target: "{{ app_home }}/backup.sql"
+    name: "{{ app_mysql_database }}"
+    login_user: "{{ app_mysql_user }}"
+    login_password: "{{ app_mysql_password }}"
+  when: app_restore_mysql
+
+- name: Remove mysql database dump.
+  ansible.builtin.file:
+    path: "{{ app_home }}/backup.sql"
+    state: absent
+
+- name: Print result.
+  ansible.builtin.debug:
+    msg: "{{ result.stdout_lines | last }}"

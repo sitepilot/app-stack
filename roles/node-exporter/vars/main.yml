@@ -1,0 +1,4 @@
+node_exporter_path: /usr/local/bin/node-exporter
+node_exporter_architecture:
+  aarch64: arm64
+  x86_64: amd64

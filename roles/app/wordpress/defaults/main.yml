@@ -1,0 +1,7 @@
+---
+app_wordpress_admin: ""
+app_wordpress_password: ""
+app_wordpress_url: "https://{{ app_domains | first }}"
+app_wordpress_title: "{{ app_name }}"
+app_wordpress_email: "wordpress+{{ app_name }}@sitepilot.io"
+app_wordpress_plugins: [ ]

@@ -1,0 +1,29 @@
+---
+- name: Create symlink in user bin folder.
+  ansible.builtin.file:
+    src: "/usr/bin/php{{ app_php_version }}"
+    dest: "{{ app_php_path }}"
+    owner: "root"
+    group: "root"
+    state: link
+
+- name: Generate php-fpm pool configuration.
+  ansible.builtin.template:
+    src: app.conf.j2
+    dest: "/etc/php/{{ app_php_version }}/fpm/pool.d/{{ app_name }}.conf"
+    mode: "0644"
+  notify: reload php-fpm
+
+- name: Remove previous php-fpm pools.
+  ansible.builtin.file:
+    path: "/etc/php/{{ item }}/fpm/pool.d/{{ app_name }}.conf"
+    state: absent
+  when: item != app_php_version
+  register: php_fpm_cleanup_result
+  loop: "{{ php_versions }}"
+
+- name: Reload previous php-fpm services.
+  ansible.builtin.service:
+    name: "php{{ item }}-fpm"
+    state: reloaded
+  loop: "{{ php_fpm_cleanup_result.results | selectattr('changed', 'equalto', true) | map(attribute='item') | list }}"

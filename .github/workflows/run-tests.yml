@@ -1,0 +1,57 @@
+---
+name: run-tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    env:
+      ANSIBLE_INVENTORY: ./tests/hosts
+    steps:
+      - name: Remove and cleanup mysql
+        run: |
+          sudo apt-get remove --purge mysql*
+          sudo apt-get autoremove
+          sudo apt-get autoclean
+          sudo rm -rf /etc/apparmor.d/abstractions/mysql /etc/apparmor.d/cache/usr.sbin.mysqld /etc/mysql /var/lib/mysql /var/log/mysql* /var/log/upstart/mysql.log* /var/run/mysqld ~/.mysql_history
+
+      - name: Remove and cleanup nginx
+        run: |
+          sudo apt-get remove --purge nginx*
+          sudo apt-get autoremove
+          sudo apt-get autoclean
+
+      - uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('./requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install ansible collections
+        run: ansible-galaxy install -r requirements.yml --force
+
+      - name: Install pip packages
+        run: pip3 install -r ./requirements.txt
+
+      - name: Lint ansible files
+        run: ansible-lint ./roles
+
+      - name: Test server provision roles
+        run: ansible-playbook server.yml
+
+      - name: Test app provision roles
+        run: ansible-playbook app.yml -e @tests/apps/app1.yml
+
+      - name: Test app backup role
+        run: ansible-playbook app.yml -e @tests/apps/app1.yml --tags=backup
+
+      - name: Test app restore role
+        run: ansible-playbook app.yml -e @tests/apps/app1.yml --tags=restore
+
+      - name: Test app destroy role
+        run: ansible-playbook app.yml -e @tests/apps/app1.yml --tags=destroy

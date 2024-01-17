@@ -1,0 +1,63 @@
+---
+- name: Create application group.
+  ansible.builtin.group:
+    name: "{{ app_group }}"
+    state: present
+
+- name: Create application user.
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    group: "{{ app_group }}"
+    home: "{{ app_home }}"
+    password: "{{ app_password }}"
+    groups: "{{ app_groups }}"
+    shell: "{{ app_shell }}"
+    create_home: true
+
+- name: Create application home directory.
+  ansible.builtin.file:
+    path: "{{ app_home }}"
+    mode: "0750"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+
+- name: Set application home directory acl.
+  ansible.posix.acl:
+    path: "{{ app_home }}"
+    entity: www-data
+    etype: user
+    permissions: rx
+    state: present
+
+- name: "Create user directories."
+  ansible.builtin.file:
+    path: "{{ item }}"
+    mode: "0755"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_group }}"
+  loop:
+    - "{{ app_bin_path }}"
+    - "{{ app_logs_path }}"
+    - "{{ app_files_path }}"
+
+- name: "Add authorized keys."
+  ansible.posix.authorized_key:
+    user: "{{ app_user }}"
+    key: "{{ app_auth_keys | join('\n') }}"
+    state: present
+    exclusive: true
+  when: app_auth_keys | length > 0
+
+- name: Update default PATH variable.
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    regexp: '^PATH='
+    line: PATH="~/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+
+- name: Generate logrotate configuration.
+  ansible.builtin.template:
+    src: logrotate.j2
+    dest: "/etc/logrotate.d/{{ app_name }}"
+    mode: "0644"
