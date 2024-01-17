@@ -39,7 +39,9 @@
     name: "{{ app_mysql_database }}"
     state: absent
     login_unix_socket: "{{ mysql_unix_socket }}"
-  when: "'mysql.service' in ansible_facts.services"
+  when:
+    - app_mysql_database
+    - "'mysql.service' in ansible_facts.services"
 
 - name: Remove mysql database user.
   community.mysql.mysql_user:
@@ -47,7 +49,9 @@
     state: absent
     host: "%"
     login_unix_socket: "{{ mysql_unix_socket }}"
-  when: "'mysql.service' in ansible_facts.services"
+  when:
+    - app_mysql_user
+    - "'mysql.service' in ansible_facts.services"
 
 - name: Flush handlers.
   ansible.builtin.meta: flush_handlers
