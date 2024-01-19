@@ -5,3 +5,4 @@ app_backup_password: ""
 app_backup_s3_key: ""
 app_backup_s3_secret: ""
 app_backup_mysql: "{{ 'mysql' in app_stack }}"
+app_backup_restore_id: latest

@@ -1,3 +1,4 @@
 ---
 dependencies:
   - role: mysql
+    when: "'mysql' in app_stack"

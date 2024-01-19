@@ -3,59 +3,9 @@
   ansible.builtin.assert:
     that:
       - app_backup_repo | length > 0
-      - app_backup_tag | length > 0
       - app_backup_password | length > 0
 
-- name: Initialize backup repository.
-  ansible.builtin.command: "restic -r {{ app_backup_repo }} init"
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ app_backup_s3_key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ app_backup_s3_secret }}"
-    RESTIC_PASSWORD: "{{ app_backup_password }}"
-  register: result
-  failed_when: false
-  changed_when: "'created restic repository' in result.stdout"
-
-- name: Create mysql database dump.
-  community.mysql.mysql_db:
-    state: dump
-    name: "{{ app_mysql_database }}"
-    target: "{{ app_home }}/backup.sql"
-    login_unix_socket: "{{ mysql_unix_socket }}"
+- name: Import action tasks.
+  ansible.builtin.import_tasks: backup.yml
+  become_user: "{{ app_user }}"
   become: true
-  become_user: root
-  when: app_backup_mysql
-
-- name: Backup files.
-  ansible.builtin.shell: set -o pipefail && restic backup
-    -r {{ app_backup_repo }}
-    --tag {{ app_backup_tag }}
-    --exclude ./backups
-    --exclude ./bin
-    --exclude ./logs
-    --exclude ./tmp
-    --exclude .cache
-    --exclude .ssh
-    --exclude .wp-cli
-    --exclude .nvm
-    --exclude .ghcup
-    -q --json . | grep -v 'percent_done'
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ app_backup_s3_key }}"
-    AWS_SECRET_ACCESS_KEY: "{{ app_backup_s3_secret }}"
-    RESTIC_PASSWORD: "{{ app_backup_password }}"
-  args:
-    chdir: "{{ app_home }}"
-    executable: /usr/bin/bash
-  register: result
-  changed_when: "'snapshot_id' in result.stdout"
-
-- name: Remove mysql database dump.
-  ansible.builtin.file:
-    path: "{{ app_home }}/backup.sql"
-    state: absent
-
-- name: Print result.
-  ansible.builtin.debug:
-    msg: "{{ item | from_json }}"
-  loop: "{{ result.stdout_lines }}"

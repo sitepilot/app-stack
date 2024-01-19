@@ -1,33 +1,27 @@
 ---
-- name: Populate service facts.
-  ansible.builtin.service_facts:
+- name: Populate package facts.
+  ansible.builtin.package_facts:
 
 - name: Remove nginx configuration.
   ansible.builtin.file:
     dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
     state: absent
   notify: reload nginx
-  when: "'nginx.service' in ansible_facts.services"
+  when: "'nginx' in ansible_facts.packages"
 
 - name: Remove litespeed configuration.
   ansible.builtin.file:
     dest: "/usr/local/lsws/conf/vhosts/{{ app_name }}.conf"
     state: absent
   notify: reload litespeed
-  when: "'openlitespeed.service' in ansible_facts.services"
+  when: "'openlitespeed' in ansible_facts.packages"
 
 - name: Remove php-fpm configuration.
   ansible.builtin.file:
     path: "/etc/php/{{ item }}/fpm/pool.d/{{ app_name }}.conf"
     state: absent
-  register: php_fpm_cleanup_result
+  notify: reload php-fpm
   loop: "{{ php_versions }}"
-
-- name: Reload php-fpm service.
-  ansible.builtin.service:
-    name: "php{{ item }}-fpm"
-    state: reloaded
-  loop: "{{ php_fpm_cleanup_result.results | selectattr('changed', 'equalto', true) | map(attribute='item') | list }}"
 
 - name: Remove logrotate configuration.
   ansible.builtin.file:
@@ -41,7 +35,7 @@
     login_unix_socket: "{{ mysql_unix_socket }}"
   when:
     - app_mysql_database
-    - "'mysql.service' in ansible_facts.services"
+    - "'mysql-server' in ansible_facts.packages"
 
 - name: Remove mysql database user.
   community.mysql.mysql_user:
@@ -51,7 +45,7 @@
     login_unix_socket: "{{ mysql_unix_socket }}"
   when:
     - app_mysql_user
-    - "'mysql.service' in ansible_facts.services"
+    - "'mysql-server' in ansible_facts.packages"
 
 - name: Flush handlers.
   ansible.builtin.meta: flush_handlers

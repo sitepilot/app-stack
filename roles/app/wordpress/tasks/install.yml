@@ -1,0 +1,49 @@
+---
+- name: Check if WordPress is already installed.
+  ansible.builtin.find:
+    paths: "{{ app_files_path }}"
+  register: files
+
+- name: Download WordPress core.
+  ansible.builtin.command: "{{ app_php_path }} {{ wpcli_path }} core download"
+  args:
+    chdir: "{{ app_files_path }}"
+  register: result
+  changed_when: "'Success' in result.stdout"
+  when: files.matched == 0
+
+- name: Check if WordPress is already configured.
+  ansible.builtin.stat:
+    path: "{{ app_files_path }}/wp-config.php"
+  register: wordpress_config
+
+- name: Configure WordPress.
+  ansible.builtin.command: "{{ app_php_path }} {{ wpcli_path }} config create
+      --dbname='{{ app_mysql_database }}' --dbhost='127.0.0.1'
+      --dbuser='{{ app_mysql_user }}' --dbpass='{{ app_mysql_password }}'"
+  args:
+    chdir: "{{ app_files_path }}"
+  register: result
+  changed_when: "'Success' in result.stdout"
+  when: not wordpress_config.stat.exists
+
+- name: Install WordPress.
+  ansible.builtin.command: "{{ app_php_path }} {{ wpcli_path }} core install
+    --url='{{ app_wordpress_url }}' --title='{{ app_wordpress_title }}'
+    --admin_user='{{ app_wordpress_admin }}' --admin_password='{{ app_wordpress_password }}'
+    --admin_email='{{ app_wordpress_email }}'"
+  args:
+    chdir: "{{ app_files_path }}"
+  register: result
+  changed_when: "'WordPress installed successfully.' in result.stdout"
+  when:
+    - app_wordpress_admin | length > 0
+    - app_wordpress_password | length > 0
+
+- name: Install plugins.
+  ansible.builtin.command: "{{ app_php_path }} {{ wpcli_path }} plugin install {{ item }} --activate"
+  loop: "{{ app_wordpress_plugins }}"
+  args:
+    chdir: "{{ app_files_path }}"
+  register: result
+  changed_when: "'Installed' in result.stdout"

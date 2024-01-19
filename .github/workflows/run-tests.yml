@@ -47,6 +47,12 @@ jobs:
       - name: Test app provision roles
         run: ansible-playbook app.yml -e @tests/apps/app1.yml
 
+      - name: Test app wordpress role
+        run: ansible-playbook app.yml -e @tests/apps/app1.yml --tags=wordpress
+
+      - name: Test app laravel role
+        run: ansible-playbook app.yml -e @tests/apps/app2.yml --tags=all,laravel
+
       - name: Test app backup role
         run: ansible-playbook app.yml -e @tests/apps/app1.yml --tags=backup
 

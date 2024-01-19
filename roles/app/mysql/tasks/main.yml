@@ -1,23 +1,26 @@
 ---
-- name: Validate variables.
-  ansible.builtin.assert:
-    that:
-      - app_mysql_user | length > 0
-      - app_mysql_password | length > 0
-      - app_mysql_database | length > 0
+- name: Create application database and user.
+  when: "'mysql' in app_stack"
+  block:
+    - name: Validate variables.
+      ansible.builtin.assert:
+        that:
+          - app_mysql_user | length > 0
+          - app_mysql_password | length > 0
+          - app_mysql_database | length > 0
 
-- name: Create application database.
-  community.mysql.mysql_db:
-    name: "{{ app_mysql_database }}"
-    state: present
-    login_unix_socket: "{{ mysql_unix_socket }}"
+    - name: Create mysql database.
+      community.mysql.mysql_db:
+        name: "{{ app_mysql_database }}"
+        state: present
+        login_unix_socket: "{{ mysql_unix_socket }}"
 
-- name: Create application database user.
-  community.mysql.mysql_user:
-    name: "{{ app_mysql_user }}"
-    password: "{{ app_mysql_password }}"
-    priv: "{{ app_mysql_database }}.*:ALL"
-    state: present
-    host: "%"
-    login_unix_socket: "{{ mysql_unix_socket }}"
-  no_log: true
+    - name: Create mysql database user.
+      community.mysql.mysql_user:
+        name: "{{ app_mysql_user }}"
+        password: "{{ app_mysql_password }}"
+        priv: "{{ app_mysql_database }}.*:ALL"
+        state: present
+        host: "%"
+        login_unix_socket: "{{ mysql_unix_socket }}"
+      no_log: true

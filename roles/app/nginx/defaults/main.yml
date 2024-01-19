@@ -1,4 +1,6 @@
 ---
+app_nginx_proxy_pass: "{{ 'http://127.0.0.1:8080' if 'litespeed' in app_stack }}"
+app_nginx_fastcgi_pass: "{{ 'unix:' + app_php_fpm_listen if 'php' in app_stack }}"
 app_nginx_fastcgi_cache: false
 app_nginx_security_headers: true
 app_nginx_static_files_cache: true

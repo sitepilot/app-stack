@@ -1,3 +1,2 @@
 ---
 app_restore_id: latest
-app_restore_mysql: "{{ 'mysql' in app_stack }}"

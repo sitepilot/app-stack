@@ -3,3 +3,4 @@ dependencies:
   - role: php
     vars:
       php_version: "{{ app_php_version }}"
+    when: "'php' in app_stack"

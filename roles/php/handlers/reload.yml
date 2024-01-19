@@ -1,0 +1,11 @@
+---
+- name: Gather package facts.
+  ansible.builtin.package_facts:
+  when: ansible_facts.packages is not defined
+
+- name: Reload php-fpm services.
+  ansible.builtin.service:
+    name: "php{{ item }}-fpm"
+    state: reloaded
+  when: "'php' + item + '-fpm' in ansible_facts.packages"
+  loop: "{{ php_versions }}"

@@ -1,7 +1,15 @@
 ---
-- name: Generate application configuration.
+- name: Generate nginx configuration.
   ansible.builtin.template:
-    src: app.conf.j2
-    dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
-    mode: "0644"
+      src: app.conf.j2
+      dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
+      mode: "0644"
   notify: reload nginx
+  when: "'nginx' in app_stack"
+
+- name: Remove nginx configuration.
+  ansible.builtin.file:
+      dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
+      state: absent
+  notify: reload nginx
+  when: "'nginx' not in app_stack"

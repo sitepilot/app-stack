@@ -13,17 +13,12 @@
     dest: "/etc/php/{{ app_php_version }}/fpm/pool.d/{{ app_name }}.conf"
     mode: "0644"
   notify: reload php-fpm
+  when: "'php' in app_stack"
 
-- name: Remove previous php-fpm pools.
+- name: Remove php-fpm configuration.
   ansible.builtin.file:
     path: "/etc/php/{{ item }}/fpm/pool.d/{{ app_name }}.conf"
     state: absent
-  when: item != app_php_version
-  register: php_fpm_cleanup_result
+  notify: reload php-fpm
+  when: "'php' not in app_stack or item != app_php_version"
   loop: "{{ php_versions }}"
-
-- name: Reload previous php-fpm services.
-  ansible.builtin.service:
-    name: "php{{ item }}-fpm"
-    state: reloaded
-  loop: "{{ php_fpm_cleanup_result.results | selectattr('changed', 'equalto', true) | map(attribute='item') | list }}"

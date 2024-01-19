@@ -1,3 +1,4 @@
 ---
 dependencies:
   - role: nginx
+    when: "'nginx' in app_stack"

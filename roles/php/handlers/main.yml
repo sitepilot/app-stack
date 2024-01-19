@@ -6,6 +6,4 @@
     enabled: true
 
 - name: reload php-fpm
-  ansible.builtin.service:
-    name: "php{{ php_version }}-fpm"
-    state: reloaded
+  ansible.builtin.include_tasks: reload.yml

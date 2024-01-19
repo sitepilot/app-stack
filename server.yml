@@ -2,8 +2,8 @@
 - hosts: "{{ hosts | default('all') }}"
   become: true
   roles:
-    - role: server
-      tags: server
+    - role: common
+      tags: common
 
     - role: msmtp
       tags: msmtp
