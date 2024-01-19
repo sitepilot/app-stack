@@ -4,9 +4,12 @@
 
 - name: Remove nginx configuration.
   ansible.builtin.file:
-    dest: "/etc/nginx/sites-enabled/{{ app_name }}.conf"
+    dest: "{{ item }}"
     state: absent
   notify: reload nginx
+  loop:
+    - "/etc/nginx/sites-enabled/{{ app_name }}.conf"
+    - "/etc/nginx/sites-available/{{ app_name }}.conf"
   when: "'nginx' in ansible_facts.packages"
 
 - name: Remove litespeed configuration.

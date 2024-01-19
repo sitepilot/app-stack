@@ -1,0 +1,5 @@
+---
+- name: reload litespeed
+  ansible.builtin.service:
+    name: lshttpd
+    state: reloaded

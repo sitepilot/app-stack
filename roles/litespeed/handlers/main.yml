@@ -4,8 +4,3 @@
     name: lshttpd
     state: restarted
     enabled: true
-
-- name: reload litespeed
-  ansible.builtin.service:
-    name: lshttpd
-    state: reloaded
