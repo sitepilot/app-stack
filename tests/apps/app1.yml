@@ -1,5 +1,5 @@
 ---
-app_hosts: test-server
+app_hosts: localhost
 app_name: app1
 app_type: wordpress
 app_stack:

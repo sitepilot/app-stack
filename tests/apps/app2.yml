@@ -1,5 +1,5 @@
 ---
-app_hosts: test-server
+app_hosts: localhost
 app_name: app2
 app_type: laravel
 app_stack:
