@@ -8,11 +8,11 @@
 # returning 444 "no response".
 
 server {
-  listen 80 default_server deferred;
-  listen [::]:80 default_server deferred;
+  listen 80 default_server;
+  listen [::]:80 default_server;
 
-  listen 443 ssl default_server deferred;
-  listen [::]:443 ssl default_server deferred;
+  listen 443 ssl default_server;
+  listen [::]:443 ssl default_server;
 
   ssl_certificate server.crt;
   ssl_certificate_key server.key;
