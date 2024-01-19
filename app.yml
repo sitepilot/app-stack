@@ -38,16 +38,21 @@
       when: "'php' in app_stack"
 
     - name: app/wordpress
-      tags: never, wordpress
+      tags: wordpress
+      when: "'wordpress' == app_type"
 
     - name: app/laravel
-      tags: never, laravel
+      tags: laravel
+      when: "'laravel' == app_type"
 
     - name: app/backup
       tags: never, backup
 
     - name: app/restore
       tags: never, restore
+
+    - name: app/migrate
+      tags: never, migrate
 
     - name: app/destroy
       tags: never, destroy
